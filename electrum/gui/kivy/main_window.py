@@ -680,7 +680,7 @@ class ElectrumWindow(App, Logger, EventListener):
             self._use_single_password = self.daemon.update_password_for_directory(
                 old_password=password, new_password=password)
         self.logger.info(f'use single password: {self._use_single_password}')
-        wallet = Wallet(db, storage, config=self.electrum_config)
+        wallet = Wallet(db, config=self.electrum_config)
         wallet.start_network(self.daemon.network)
         self.daemon.add_wallet(wallet)
         self.load_wallet(wallet)
@@ -715,7 +715,7 @@ class ElectrumWindow(App, Logger, EventListener):
             wizard.run('new')
         else:
             assert storage.is_past_initial_decryption()
-            db = WalletDB(storage.read(), manual_upgrades=False)
+            db = WalletDB(storage.read(), storage=storage, manual_upgrades=False)
             assert not db.requires_upgrade()
             self.on_wizard_success(storage, db, password)
 
