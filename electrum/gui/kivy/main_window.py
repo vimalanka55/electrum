@@ -674,7 +674,7 @@ class ElectrumWindow(App, Logger, EventListener):
         else:
             return ''
 
-    def on_wizard_success(self, storage, db, password):
+    def on_wizard_success(self, db, password):
         self.password = password
         if self.electrum_config.WALLET_USE_SINGLE_PASSWORD:
             self._use_single_password = self.daemon.update_password_for_directory(
