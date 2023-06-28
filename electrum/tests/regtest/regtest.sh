@@ -171,7 +171,7 @@ if [[ $1 == "collaborative_close" ]]; then
 fi
 
 
-if [[ $1 == "reverse_swap" ]]; then
+if [[ $1 == "swapserver_success" ]]; then
     wait_for_balance alice 1
     echo "alice opens channel"
     bob_node=$($bob nodeid)
@@ -186,6 +186,25 @@ if [[ $1 == "reverse_swap" ]]; then
     new_blocks 1
     sleep 1
     new_blocks 1
+fi
+
+if [[ $1 == "swapserver_refund" ]]; then
+    $alice setconfig test_swapserver_refund true
+    wait_for_balance alice 1
+    echo "alice opens channel"
+    bob_node=$($bob nodeid)
+    channel=$($alice open_channel $bob_node 0.15)
+    new_blocks 3
+    wait_until_channel_open alice
+    echo "alice initiates swap"
+    dryrun=$($alice reverse_swap 0.02 dryrun)
+    echo $dryrun | jq
+    onchain_amount=$(echo $dryrun| jq -r ".onchain_amount")
+    screen -S alice_payment -dm -L -Logfile /tmp/alice/screen.log $alice reverse_swap 0.02 $onchain_amount
+    sleep 1
+    new_blocks 150
+    sleep 1
+    $bob getbalance
 fi
 
 

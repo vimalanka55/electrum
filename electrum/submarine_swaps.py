@@ -232,11 +232,14 @@ class SwapManager(Logger):
                     #
                     tx = self.lnwatcher.adb.get_transaction(txin.spent_txid)
                     preimage = tx.inputs()[0].witness_elements()[1]
-                    assert swap.payment_hash == sha256(preimage)
-                    swap.preimage = preimage
-                    self.logger.info(f'found preimage: {preimage.hex()}')
-                    self.lnworker.preimages[swap.payment_hash.hex()] = preimage.hex()
-                    # note: we must check the payment secret before we broadcast the funding tx
+                    if sha256(preimage) == swap.payment_hash:
+                        swap.preimage = preimage
+                        self.logger.info(f'found preimage: {preimage.hex()}')
+                        self.lnworker.preimages[swap.payment_hash.hex()] = preimage.hex()
+                        # note: we must check the payment secret before we broadcast the funding tx
+                    else:
+                        # refund tx
+                        pass
 
                 if spent_height > 0:
                     if current_height - spent_height > REDEEM_AFTER_DOUBLE_SPENT_DELAY:
@@ -580,7 +583,8 @@ class SwapManager(Logger):
         swap._payment_hash = preimage_hash
         self._add_or_reindex_swap(swap)
         # add callback to lnwatcher
-        self.add_lnwatcher_callback(swap)
+        if not self.network.config.TEST_SWAPSERVER_REFUND:
+            self.add_lnwatcher_callback(swap)
         # initiate fee payment.
         if fee_invoice:
             self.prepayments[prepay_hash] = preimage_hash
